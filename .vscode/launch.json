@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "preLaunchTask": "rust: cargo build",
+            "type": "probe-rs-debug",
+            "request": "launch",
+            "name": "probe_rs Server attach example",
+            "server": "host.docker.internal:50001",
+            "speed": 4000,
+            "chip": "RP2040",
+            "flashingConfig": {
+                "flashingEnabled": true,
+                "haltAfterReset": true,
+            },
+            "coreConfigs": [
+                {
+                    "coreIndex": 0,
+                    "programBinary": "${env:LOCAL_WORKSPACE_FOLDER}/target/thumbv6m-none-eabi/debug/baker-link-dev",
+                    "rttEnabled": true,
+                }
+            ],
+            "env": {
+                "RUST_LOG": "info"
+            },
+            "consoleLogLevel": "Info"
+        }
+    ]
+}
