@@ -4,11 +4,11 @@
 
 #[rtic::app(device = rp_pico::hal::pac, dispatchers = [TIMER_IRQ_1])]
 mod app {
-    use embedded_hal::digital::v2::OutputPin;
+    use embedded_hal::digital::v2::{InputPin, OutputPin};
     use panic_halt as _;
     use rp_pico as _;
     use rp_pico::hal::{
-        gpio::bank0::{Gpio12, Gpio14, Gpio2, Gpio10, Gpio11, Gpio13},
+        gpio::bank0::{Gpio10, Gpio11, Gpio12, Gpio13, Gpio14, Gpio2},
         usb::UsbBus,
     };
     use usb_device::{
@@ -19,15 +19,16 @@ mod app {
 
     // DIO:GPIO14, CLK:GPIO12, LED:GPIO0(Green), GPIO2(RED), Button:GPIO1
     // DIO:GPIO12, CLK:GPIO13, LED:GPIO0(Green), GPIO2(RED), Button:GPIO1
-    type GpioSwDio = Gpio14;
-    type GpioSwClk = Gpio12;
-    // type GpioSwDio = Gpio12;
-    // type GpioSwClk = Gpio13;
+    type GpioSwDio1 = Gpio14;
+    type GpioSwClk1 = Gpio12;
 
+    type GpioSwDio2 = Gpio11;
+    type GpioSwClk2 = Gpio10;
 
     type PowerLed = Gpio2;
 
-    type SwdIoPins = rust_dap_rp2040::util::SwdIoSet<GpioSwClk, GpioSwDio>;
+    type SwdIoPins1 = rust_dap_rp2040::util::SwdIoSet<GpioSwClk1, GpioSwDio1>;
+    type SwdIoPins2 = rust_dap_rp2040::util::SwdIoSet<GpioSwClk2, GpioSwDio2>;
 
     #[shared]
     struct Shared {
@@ -37,7 +38,8 @@ mod app {
     #[local]
     struct Local {
         usb_bus: UsbDevice<'static, UsbBus>,
-        usb_dap: rust_dap::CmsisDap<'static, UsbBus, SwdIoPins, 64>,
+        usb_dap1: Option<rust_dap::CmsisDap<'static, UsbBus, SwdIoPins1, 64>>,
+        usb_dap2: Option<rust_dap::CmsisDap<'static, UsbBus, SwdIoPins2, 64>>,
         power_led: rp_pico::hal::gpio::Pin<
             PowerLed,
             rp_pico::hal::gpio::Output<rp_pico::hal::gpio::PushPull>,
@@ -69,11 +71,13 @@ mod app {
             &mut resets,
         );
 
+        let button = pins.gpio18.into_pull_down_input();
+
         let mut swdio_pin = pins.gpio14.into_mode();
         let mut swclk_pin = pins.gpio12.into_mode();
         swdio_pin.set_slew_rate(rp_pico::hal::gpio::OutputSlewRate::Fast);
         swclk_pin.set_slew_rate(rp_pico::hal::gpio::OutputSlewRate::Fast);
-        let swdio_pins = SwdIoPins::new(ctx.device.PIO0, swclk_pin, swdio_pin, &mut resets);
+        let swdio_pins = SwdIoPins1::new(ctx.device.PIO0, swclk_pin, swdio_pin, &mut resets);
 
         let usb_allocator = UsbBusAllocator::new(rp_pico::hal::usb::UsbBus::new(
             ctx.device.USBCTRL_REGS,
@@ -86,8 +90,13 @@ mod app {
         let usb_allocator = ctx.local.USB_ALLOCATOR.as_ref().unwrap();
 
         let usb_serial = usbd_serial::SerialPort::new(&usb_allocator);
-        let usb_dap =
+
+        let usb_dap1 =
             rust_dap::CmsisDap::new(&usb_allocator, swdio_pins, rust_dap::DapCapabilities::SWD);
+
+        // let usb_dap2 =
+        //     rust_dap::CmsisDap::new(&usb_allocator, swdio_pins, rust_dap::DapCapabilities::SWD);
+
         let usb_bus = UsbDeviceBuilder::new(&usb_allocator, UsbVidPid(0x2E8A, 0x106B))
             .manufacturer("Seebeck inc.")
             .product("Baker link. Dev(CMSIS-DAP)")
@@ -104,9 +113,10 @@ mod app {
         (
             Shared { usb_serial },
             Local {
-                usb_bus,
-                usb_dap,
-                power_led,
+                usb_bus: usb_bus,
+                usb_dap1: Some(usb_dap1),
+                usb_dap2: None,
+                power_led: power_led,
             },
         )
     }
@@ -118,20 +128,22 @@ mod app {
         loop {}
     }
 
-    #[task(binds = USBCTRL_IRQ, priority = 1, shared = [usb_serial], local = [usb_bus, usb_dap])]
+    #[task(binds = USBCTRL_IRQ, priority = 1, shared = [usb_serial], local = [usb_bus, usb_dap1])]
     fn dap_run(mut ctx: dap_run::Context) {
-        let poll_result = ctx
-            .shared
-            .usb_serial
-            .lock(|usb_serial| ctx.local.usb_bus.poll(&mut [usb_serial, ctx.local.usb_dap]));
-        if !poll_result {
-            return;
-        }
-        match ctx.local.usb_dap.process() {
-            Ok(_) => {
-                // ctx.local.run_led.set_low().unwrap();
+        if let Some(usb_dap) = ctx.local.usb_dap1 {
+            let poll_result = ctx
+                .shared
+                .usb_serial
+                .lock(|usb_serial| ctx.local.usb_bus.poll(&mut [usb_serial, usb_dap]));
+            if !poll_result {
+                return;
             }
-            Err(_) => {}
+            match usb_dap.process() {
+                Ok(_) => {
+                    // ctx.local.run_led.set_low().unwrap();
+                }
+                Err(_) => {}
+            }
         }
     }
 }
