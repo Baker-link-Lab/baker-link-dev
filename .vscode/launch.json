@@ -16,7 +16,7 @@
             "coreConfigs": [
                 {
                     "coreIndex": 0,
-                    "programBinary": "${env:LOCAL_WORKSPACE_FOLDER}/target/thumbv6m-none-eabi/debug/baker-link-dev",
+                    "programBinary": "${env:LOCAL_WORKSPACE_FOLDER}/target/thumbv6m-none-eabi/debug/baker-link",
                     "rttEnabled": true,
                 }
             ],
