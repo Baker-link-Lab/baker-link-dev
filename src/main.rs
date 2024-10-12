@@ -33,7 +33,6 @@ mod app {
     enum DapType {
         Dap1(rust_dap::CmsisDap<'static, UsbBus, SwdIoPins1, 64>),
         Dap2(rust_dap::CmsisDap<'static, UsbBus, SwdIoPins2, 64>),
-        None,
     }
 
     #[shared]
@@ -95,7 +94,7 @@ mod app {
         let usb_serial = usbd_serial::SerialPort::new(&usb_allocator);
 
         let power_led = pins.gpio2.into_push_pull_output();
-        let mut green_led = pins.gpio0.into_push_pull_output();
+        let green_led = pins.gpio0.into_push_pull_output();
 
         let mut cnt = 0;
         for _ in 0..5 {
@@ -103,7 +102,7 @@ mod app {
                 cnt += 1;
             }
         }
-        let mut usb_dap = DapType::None;
+        let usb_dap;
         if cnt >= 3 {
             let mut swdio_pin = pins.gpio11.into_mode();
             let mut swclk_pin = pins.gpio10.into_mode();
@@ -127,7 +126,6 @@ mod app {
                 rust_dap::DapCapabilities::SWD,
             ));
         }
-        green_led.set_high().unwrap();
         let usb_bus = UsbDeviceBuilder::new(&usb_allocator, UsbVidPid(0x2E8A, 0x106B))
             .manufacturer("Seebeck inc.")
             .product("Baker link. Dev(CMSIS-DAP)")
@@ -160,7 +158,6 @@ mod app {
     #[task(binds = USBCTRL_IRQ, priority = 1, shared = [usb_serial], local = [usb_bus, usb_dap, green_led])]
     fn dap_run(mut ctx: dap_run::Context) {
         let green_led = ctx.local.green_led;
-        green_led.set_high().unwrap();
         match ctx.local.usb_dap {
             DapType::Dap1(usb_dap) => {
                 let poll_result = ctx
@@ -193,7 +190,6 @@ mod app {
                     Err(_) => {}
                 }
             }
-            DapType::None => {}
         }
     }
 }
