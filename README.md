@@ -16,3 +16,10 @@
 ## Third Party Licenses
 
 [license.html](license.html)
+
+## Release
+
+| version | date       | info                                                        |
+| ------- | ---------- | ----------------------------------------------------------- |
+| v0.1.0  | 2024-10-5  | Supported<br> - Connecting internal microcontroller(RP2040) |
+| v0.1.2  | 2024-10-19 | Supported<br> - Connecting external microcontroller(RP2040) |
