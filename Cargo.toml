@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
-name = "baker-link"
-version = "0.1.0"
+name = "baker-link-dev"
+version = "0.1.2"
 # license = "MIT OR Apache-2.0"
 
 [dependencies]
