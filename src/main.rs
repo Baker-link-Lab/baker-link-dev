@@ -21,8 +21,8 @@ mod app {
     type GpioSwDio1 = Gpio14;
     type GpioSwClk1 = Gpio12;
 
-    type GpioSwDio2 = Gpio11;
-    type GpioSwClk2 = Gpio10;
+    type GpioSwDio2 = Gpio10;
+    type GpioSwClk2 = Gpio11;
 
     type GreenLed = Gpio0;
     type PowerLed = Gpio2;
@@ -104,8 +104,8 @@ mod app {
         }
         let usb_dap;
         if cnt >= 3 {
-            let mut swdio_pin = pins.gpio11.into_mode();
-            let mut swclk_pin = pins.gpio10.into_mode();
+            let mut swdio_pin = pins.gpio10.into_mode();
+            let mut swclk_pin = pins.gpio11.into_mode();
             swdio_pin.set_slew_rate(rp_pico::hal::gpio::OutputSlewRate::Fast);
             swclk_pin.set_slew_rate(rp_pico::hal::gpio::OutputSlewRate::Fast);
             let swdio_pins = SwdIoPins2::new(ctx.device.PIO0, swclk_pin, swdio_pin, &mut resets);
