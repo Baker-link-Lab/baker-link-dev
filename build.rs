@@ -40,7 +40,7 @@ fn main() {
         .unwrap_or_else(|| "unknown".to_string());
 
     let content = format!(
-        "pub const PRODUCT_NAME: &str = \"Baker link. Dev(CMSIS-DAP) ({} )\";",
+        "pub const PRODUCT_NAME: &str = \"Baker link. Dev(CMSIS-DAP) ({})\";",
         git_hash
     );
     fs::write("src/git_product.rs", content).expect("Failed to write git_product.rs");
