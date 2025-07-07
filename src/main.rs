@@ -2,6 +2,8 @@
 #![no_std]
 #![feature(type_alias_impl_trait)]
 
+mod git_product;
+
 #[rtic::app(device = rp_pico::hal::pac, dispatchers = [TIMER_IRQ_1])]
 mod app {
     use embedded_hal::digital::v2::{InputPin, OutputPin};
@@ -126,9 +128,10 @@ mod app {
                 rust_dap::DapCapabilities::SWD,
             ));
         }
-        let usb_bus = UsbDeviceBuilder::new(&usb_allocator, UsbVidPid(0x2E8A, 0x106B))
-            .manufacturer("Seebeck inc.")
-            .product("Baker link. Dev(CMSIS-DAP)")
+
+        let usb_bus = UsbDeviceBuilder::new(&usb_allocator, UsbVidPid(0x6666, 0x4444))
+            .manufacturer("Baker-link-Lab")
+            .product(crate::git_product::PRODUCT_NAME)
             // .serial_number("")
             .device_class(rust_dap::USB_CLASS_MISCELLANEOUS)
             .device_class(rust_dap::USB_SUBCLASS_COMMON)

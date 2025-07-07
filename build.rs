@@ -9,9 +9,11 @@
 //! new memory settings.
 
 use std::env;
+use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::process::Command;
 
 fn main() {
     // Put `memory.x` in our output directory and ensure it's
@@ -28,4 +30,18 @@ fn main() {
     // here, we ensure the build script is only re-run when
     // `memory.x` is changed.
     println!("cargo:rerun-if-changed=memory.x");
+
+    let git_hash = Command::new("git")
+        .args(["rev-parse", "--short", "HEAD"])
+        .output()
+        .ok()
+        .and_then(|out| String::from_utf8(out.stdout).ok())
+        .map(|s| s.trim().to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+
+    let content = format!(
+        "pub const PRODUCT_NAME: &str = \"Baker link. Dev(CMSIS-DAP) ({} )\";",
+        git_hash
+    );
+    fs::write("src/git_product.rs", content).expect("Failed to write git_product.rs");
 }

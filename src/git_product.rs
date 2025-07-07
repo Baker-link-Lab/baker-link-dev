@@ -1,0 +1,1 @@
+pub const PRODUCT_NAME: &str = "Baker link. Dev(CMSIS-DAP) (b581518 )";
